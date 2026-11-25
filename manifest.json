@@ -1,0 +1,21 @@
+{
+    "package_name": "Track Show-Hide",
+    "id": "com.track_show_hide",
+    "title": "Track Show/Hide",
+    "version": "0.4.1",
+    "manufacturer": "R-McG",
+    "description": "Show and hide tracks, buses and folders in the Timeline and Mixer: filter, click, shift-click or drag ranges, Show/Hide All, and presets by track type or your own saved views.",
+    "categories": [
+        "Workflow",
+        "Session Management",
+        "Mixing & Mastering"
+    ],
+    "icon": "icon.png",
+    "sdk_version": "3.1.2",
+    "min_luna_version": "3.1.2",
+    "engines": [
+        "luna"
+    ],
+    "html": "index.html",
+    "target": "browser"
+}

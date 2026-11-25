@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Track Show/Hide</title>
+  <style>
+    :root { color-scheme: dark; --accent: #F7C449; --bg: #151515; --panel: #1e1e1e; --line: #2a2a2a; --muted: #8a8a8a; }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; background: var(--bg); color: #ddd; font: 13px -apple-system, Helvetica, sans-serif; display: flex; flex-direction: column; height: 100vh; user-select: none; }
+    header { padding: 10px 10px 8px; background: var(--panel); border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+    .row { display: flex; gap: 6px; align-items: center; }
+    input[type=search], input[type=text] { flex: 1; min-width: 0; font: inherit; background: #111; color: #ddd; border: 1px solid #3a3a3a; border-radius: 6px; padding: 6px 8px; outline: none; user-select: text; }
+    input:focus { border-color: var(--accent); }
+    button, select { font: 12px -apple-system, Helvetica, sans-serif; background: #2a2a2a; color: #ddd; border: 1px solid #444; border-radius: 5px; padding: 5px 8px; cursor: pointer; white-space: nowrap; }
+    button:hover:not(:disabled) { border-color: #666; }
+    button:disabled { opacity: .4; cursor: default; }
+    button.primary { background: var(--accent); color: #000; border-color: var(--accent); }
+    button.danger { color: #ff8a80; }
+    .actions { flex-wrap: wrap; }
+    .actions button { flex: 1 1 auto; }
+    #summary { color: var(--muted); font-size: 11px; display: flex; justify-content: space-between; }
+    #status { color: var(--muted); }
+
+    /* Presets */
+    .section-head { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+    .section-head button { text-transform: none; letter-spacing: 0; padding: 2px 8px; font-size: 11px; }
+    .section-head button.on { background: var(--accent); color: #000; border-color: var(--accent); }
+    #presets { display: flex; flex-wrap: wrap; gap: 5px; }
+    .chip { border-radius: 12px; padding: 4px 10px; background: #262626; border: 1px solid #3a3a3a; }
+    .chip.custom { border-color: #5a4b22; }
+    .chip.active { background: var(--accent); color: #000; border-color: var(--accent); }
+    .chip.add { border-style: dashed; color: var(--muted); }
+    .chip .n { color: inherit; opacity: .55; margin-left: 4px; font-size: 10px; }
+    .hint { color: #666; font-size: 10px; }
+    .panel { background: #181818; border: 1px solid var(--line); border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+    .edit-row { display: flex; gap: 5px; align-items: center; }
+    .edit-row .count { color: var(--muted); font-size: 11px; min-width: 22px; text-align: right; }
+
+    main { flex: 1; overflow: auto; }
+    .track { display: flex; align-items: center; gap: 8px; padding: 0 10px; height: 30px; border-bottom: 1px solid #202020; cursor: pointer; }
+    .track:hover { background: #1c1c1c; }
+    .track .swatch { width: 4px; height: 18px; border-radius: 2px; flex: none; }
+    .track .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .track .type { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .04em; }
+    main { touch-action: none; }
+    .track.anchor { box-shadow: inset 2px 0 0 var(--accent); }
+    .track.painting { background: #232016; }
+    .track .eye { width: 26px; height: 22px; padding: 0; display: grid; place-items: center; color: var(--accent); }
+    .track .eye svg { width: 16px; height: 16px; }
+    .track.hidden .name, .track.hidden .type { color: #5a5a5a; }
+    .track.hidden .swatch { opacity: .3; }
+    .track.hidden .eye { color: #555; }
+    .track.in-folder .name { padding-left: 12px; }
+    #empty { color: var(--muted); padding: 20px 12px; text-align: center; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="section-head"><span>Presets</span><button id="editPresets" title="Rename, update or delete your presets">Edit</button></div>
+    <div id="presets"></div>
+    <div class="hint" id="presetHint">Click: show only these · Shift-click: add to what's shown</div>
+
+    <div class="panel" id="savePanel" hidden>
+      <div class="row">
+        <input id="presetName" type="text" placeholder="Preset name, e.g. Drums" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="row">
+        <select id="presetSource">
+          <option value="shown">Tracks shown now</option>
+          <option value="selected">Tracks selected in LUNA</option>
+        </select>
+        <span class="hint" id="saveCount"></span>
+        <span style="flex:1"></span>
+        <button id="saveCancel">Cancel</button>
+        <button id="saveConfirm" class="primary">Save</button>
+      </div>
+    </div>
+
+    <div class="panel" id="editPanel" hidden></div>
+
+    <div class="row">
+      <input id="search" type="search" placeholder="Filter tracks" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="row actions">
+      <button id="showAll" title="Show every track">Show All</button>
+      <button id="hideAll" title="Hide every track">Hide All</button>
+      <button id="onlySelected" title="Show only the tracks selected in LUNA">Show Selected Only</button>
+      <button id="hideSelected" title="Hide the tracks selected in LUNA">Hide Selected</button>
+      <button id="invert" title="Swap shown and hidden tracks">Invert</button>
+    </div>
+    <div class="row actions" id="matchActions" hidden>
+      <button id="showMatching">Show Matching</button>
+      <button id="hideMatching">Hide Matching</button>
+      <button id="onlyMatching">Show Matching Only</button>
+    </div>
+    <div class="hint">Click a track to show/hide · Shift-click to do the same to a range · Drag to paint</div>
+    <div id="summary"><span id="count"></span><span id="status">connecting...</span></div>
+  </header>
+  <main id="tracks"></main>
+  <script src="vendor/luna.global.js"></script>
+  <script src="logic.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
